@@ -1,0 +1,12 @@
+apiVersion: v1
+kind: Pod
+metadata:
+  name: pod-chao-san
+  labels:
+    app: demo-web
+spec:
+  containers:
+    - name: nginx-container
+      image: nginx:alpine
+      ports:
+        - containerPort: 80
