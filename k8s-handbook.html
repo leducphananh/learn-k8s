@@ -1,0 +1,1491 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Kubernetes Visual Handbook & Cheatsheet - Cẩm Nang K8s Toàn Diện</title>
+  <meta name="description" content="Tài liệu trực quan, mô hình kiến trúc, giải phẫu YAML và tra cứu lệnh kubectl tương tác dành cho lập trình viên và DevOps.">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  
+  <style>
+    :root {
+      --bg-base: #07090e;
+      --bg-surface: #0e131f;
+      --bg-surface-elevated: #151d2f;
+      --bg-surface-card: rgba(21, 29, 47, 0.7);
+      --border-subtle: rgba(255, 255, 255, 0.08);
+      --border-hover: rgba(56, 189, 248, 0.35);
+      
+      --k8s-blue: #326ce5;
+      --k8s-blue-glow: rgba(50, 108, 229, 0.25);
+      --accent-cyan: #38bdf8;
+      --accent-purple: #a855f7;
+      --accent-emerald: #10b981;
+      --accent-amber: #f59e0b;
+      --accent-rose: #f43f5e;
+      
+      --text-main: #f1f5f9;
+      --text-muted: #94a3b8;
+      --text-dim: #64748b;
+      
+      --font-sans: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, sans-serif;
+      --font-mono: 'JetBrains Mono', monospace;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    html {
+      scroll-behavior: smooth;
+    }
+
+    body {
+      background-color: var(--bg-base);
+      color: var(--text-main);
+      font-family: var(--font-sans);
+      line-height: 1.6;
+      background-image: 
+        radial-gradient(circle at 15% 10%, rgba(50, 108, 229, 0.12) 0%, transparent 40%),
+        radial-gradient(circle at 85% 60%, rgba(168, 85, 247, 0.08) 0%, transparent 45%),
+        radial-gradient(circle at 50% 90%, rgba(56, 189, 248, 0.06) 0%, transparent 40%);
+      background-attachment: fixed;
+      min-height: 100vh;
+      overflow-x: hidden;
+    }
+
+    /* Container */
+    .container {
+      max-width: 1300px;
+      margin: 0 auto;
+      padding: 0 1.5rem;
+    }
+
+    /* Navigation Bar */
+    .navbar {
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      background: rgba(7, 9, 14, 0.82);
+      backdrop-filter: blur(16px);
+      border-bottom: 1px solid var(--border-subtle);
+      padding: 0.85rem 0;
+    }
+
+    .nav-inner {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 1rem;
+    }
+
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+      text-decoration: none;
+      color: var(--text-main);
+      font-weight: 800;
+      font-size: 1.2rem;
+    }
+
+    .brand-logo {
+      width: 32px;
+      height: 32px;
+      fill: var(--k8s-blue);
+      filter: drop-shadow(0 0 10px rgba(50, 108, 229, 0.5));
+    }
+
+    .nav-links {
+      display: flex;
+      align-items: center;
+      gap: 1.25rem;
+      list-style: none;
+    }
+
+    .nav-link {
+      color: var(--text-muted);
+      text-decoration: none;
+      font-size: 0.9rem;
+      font-weight: 500;
+      transition: color 0.2s ease, transform 0.2s ease;
+      padding: 0.35rem 0.65rem;
+      border-radius: 6px;
+    }
+
+    .nav-link:hover {
+      color: var(--accent-cyan);
+      background: rgba(255, 255, 255, 0.04);
+    }
+
+    /* Hero Section */
+    .hero {
+      padding: 4.5rem 0 3rem;
+      text-align: center;
+      position: relative;
+    }
+
+    .hero-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.5rem;
+      padding: 0.4rem 0.9rem;
+      background: rgba(50, 108, 229, 0.15);
+      border: 1px solid rgba(50, 108, 229, 0.4);
+      border-radius: 9999px;
+      font-size: 0.82rem;
+      font-weight: 600;
+      color: var(--accent-cyan);
+      margin-bottom: 1.5rem;
+      letter-spacing: 0.02em;
+    }
+
+    .hero-badge::before {
+      content: '';
+      width: 7px;
+      height: 7px;
+      border-radius: 50%;
+      background: var(--accent-emerald);
+      box-shadow: 0 0 8px var(--accent-emerald);
+    }
+
+    .hero-title {
+      font-size: clamp(2.2rem, 4.5vw, 3.8rem);
+      font-weight: 800;
+      letter-spacing: -0.03em;
+      line-height: 1.15;
+      margin-bottom: 1.25rem;
+      background: linear-gradient(135deg, #ffffff 30%, #94a3b8 70%, var(--accent-cyan) 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+
+    .hero-subtitle {
+      font-size: 1.15rem;
+      color: var(--text-muted);
+      max-width: 750px;
+      margin: 0 auto 2.5rem;
+      font-weight: 400;
+    }
+
+    /* Live Search Header */
+    .search-wrapper {
+      max-width: 620px;
+      margin: 0 auto;
+      position: relative;
+    }
+
+    .search-input {
+      width: 100%;
+      padding: 1rem 1.25rem 1rem 3.25rem;
+      background: var(--bg-surface-elevated);
+      border: 1px solid var(--border-subtle);
+      border-radius: 14px;
+      color: var(--text-main);
+      font-family: var(--font-sans);
+      font-size: 1rem;
+      outline: none;
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.4);
+      transition: border-color 0.25s, box-shadow 0.25s;
+    }
+
+    .search-input:focus {
+      border-color: var(--accent-cyan);
+      box-shadow: 0 0 0 3px rgba(56, 189, 248, 0.2), 0 12px 35px rgba(0, 0, 0, 0.5);
+    }
+
+    .search-icon {
+      position: absolute;
+      left: 1.15rem;
+      top: 50%;
+      transform: translateY(-50%);
+      width: 20px;
+      height: 20px;
+      stroke: var(--text-dim);
+      pointer-events: none;
+    }
+
+    /* Section Styles */
+    section {
+      padding: 4rem 0;
+    }
+
+    .section-header {
+      margin-bottom: 2.5rem;
+      text-align: left;
+    }
+
+    .section-tag {
+      font-size: 0.8rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      color: var(--accent-cyan);
+      margin-bottom: 0.5rem;
+      display: inline-block;
+    }
+
+    .section-title {
+      font-size: 1.95rem;
+      font-weight: 800;
+      letter-spacing: -0.02em;
+      color: #fff;
+    }
+
+    .section-desc {
+      color: var(--text-muted);
+      margin-top: 0.35rem;
+      font-size: 1rem;
+    }
+
+    /* Architecture Visual Grid */
+    .arch-grid {
+      display: grid;
+      grid-template-columns: 1.1fr 1fr;
+      gap: 1.75rem;
+      margin-bottom: 2rem;
+    }
+
+    @media (max-width: 992px) {
+      .arch-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    .card {
+      background: var(--bg-surface-card);
+      backdrop-filter: blur(14px);
+      border: 1px solid var(--border-subtle);
+      border-radius: 18px;
+      padding: 2rem;
+      transition: transform 0.25s ease, border-color 0.25s ease, box-shadow 0.25s ease;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .card::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 2px;
+      background: linear-gradient(90deg, transparent, rgba(56, 189, 248, 0.4), transparent);
+      opacity: 0;
+      transition: opacity 0.3s ease;
+    }
+
+    .card:hover {
+      border-color: var(--border-hover);
+      box-shadow: 0 16px 40px rgba(0, 0, 0, 0.45);
+      transform: translateY(-2px);
+    }
+
+    .card:hover::before {
+      opacity: 1;
+    }
+
+    .card-title-group {
+      display: flex;
+      align-items: center;
+      gap: 0.85rem;
+      margin-bottom: 1.25rem;
+    }
+
+    .card-badge {
+      width: 40px;
+      height: 40px;
+      border-radius: 10px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: rgba(50, 108, 229, 0.15);
+      color: var(--accent-cyan);
+      flex-shrink: 0;
+    }
+
+    .card-title {
+      font-size: 1.35rem;
+      font-weight: 700;
+      color: #fff;
+    }
+
+    .component-list {
+      display: flex;
+      flex-direction: column;
+      gap: 0.9rem;
+    }
+
+    .component-item {
+      background: rgba(255, 255, 255, 0.025);
+      border: 1px solid rgba(255, 255, 255, 0.05);
+      border-radius: 12px;
+      padding: 1rem 1.15rem;
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
+
+    .component-item:hover, .component-item.active {
+      background: rgba(50, 108, 229, 0.12);
+      border-color: rgba(56, 189, 248, 0.3);
+      transform: translateX(4px);
+    }
+
+    .comp-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 0.3rem;
+    }
+
+    .comp-name {
+      font-family: var(--font-mono);
+      font-size: 0.95rem;
+      font-weight: 700;
+      color: var(--accent-cyan);
+    }
+
+    .comp-tag {
+      font-size: 0.72rem;
+      font-weight: 600;
+      padding: 0.15rem 0.5rem;
+      border-radius: 4px;
+      background: rgba(255, 255, 255, 0.06);
+      color: var(--text-muted);
+    }
+
+    .comp-desc {
+      font-size: 0.88rem;
+      color: var(--text-muted);
+      line-height: 1.45;
+    }
+
+    /* Resource Hierarchy Diagram */
+    .hierarchy-container {
+      background: var(--bg-surface);
+      border: 1px solid var(--border-subtle);
+      border-radius: 18px;
+      padding: 2.25rem;
+      position: relative;
+    }
+
+    .diagram-flow {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      justify-content: center;
+      gap: 1.25rem;
+      padding: 1rem 0;
+    }
+
+    .flow-node {
+      background: var(--bg-surface-elevated);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      border-radius: 14px;
+      padding: 1.25rem 1.5rem;
+      text-align: center;
+      min-width: 170px;
+      box-shadow: 0 8px 24px rgba(0, 0, 0, 0.35);
+      transition: all 0.25s ease;
+      position: relative;
+    }
+
+    .flow-node:hover {
+      border-color: var(--accent-cyan);
+      transform: translateY(-3px);
+      box-shadow: 0 12px 30px rgba(56, 189, 248, 0.2);
+    }
+
+    .flow-icon {
+      font-size: 1.6rem;
+      margin-bottom: 0.4rem;
+      display: block;
+    }
+
+    .flow-title {
+      font-weight: 700;
+      font-size: 1.05rem;
+      color: #fff;
+    }
+
+    .flow-sub {
+      font-size: 0.76rem;
+      color: var(--text-muted);
+      margin-top: 0.25rem;
+    }
+
+    .flow-arrow {
+      color: var(--text-dim);
+      font-size: 1.5rem;
+      font-weight: bold;
+    }
+
+    /* Manifest Inspector & Tabs */
+    .manifest-viewer {
+      background: #090d16;
+      border: 1px solid var(--border-subtle);
+      border-radius: 18px;
+      overflow: hidden;
+      box-shadow: 0 14px 40px rgba(0, 0, 0, 0.5);
+    }
+
+    .tab-header {
+      display: flex;
+      background: #06080d;
+      border-bottom: 1px solid var(--border-subtle);
+      overflow-x: auto;
+    }
+
+    .tab-btn {
+      padding: 0.9rem 1.5rem;
+      background: transparent;
+      border: none;
+      color: var(--text-muted);
+      font-family: var(--font-sans);
+      font-weight: 600;
+      font-size: 0.9rem;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      border-bottom: 2px solid transparent;
+      white-space: nowrap;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+
+    .tab-btn:hover {
+      color: var(--text-main);
+      background: rgba(255, 255, 255, 0.02);
+    }
+
+    .tab-btn.active {
+      color: var(--accent-cyan);
+      background: rgba(56, 189, 248, 0.05);
+      border-bottom-color: var(--accent-cyan);
+    }
+
+    .manifest-body {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      min-height: 480px;
+    }
+
+    @media (max-width: 880px) {
+      .manifest-body {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    .code-panel {
+      padding: 1.5rem;
+      font-family: var(--font-mono);
+      font-size: 0.88rem;
+      line-height: 1.65;
+      color: #e2e8f0;
+      background: #060911;
+      overflow-x: auto;
+      border-right: 1px solid var(--border-subtle);
+    }
+
+    .code-line {
+      display: block;
+      padding: 0.15rem 0.4rem;
+      border-radius: 4px;
+      transition: background 0.15s;
+      cursor: pointer;
+    }
+
+    .code-line:hover, .code-line.highlight {
+      background: rgba(56, 189, 248, 0.15);
+      color: #38bdf8;
+    }
+
+    .yaml-key { color: #818cf8; font-weight: 600; }
+    .yaml-val { color: #34d399; }
+    .yaml-str { color: #f472b6; }
+    .yaml-comment { color: #64748b; font-style: italic; }
+
+    .explanation-panel {
+      padding: 2rem;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      background: var(--bg-surface-elevated);
+    }
+
+    .exp-title {
+      font-size: 1.25rem;
+      font-weight: 700;
+      color: #fff;
+      margin-bottom: 0.75rem;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+
+    .exp-content {
+      color: var(--text-muted);
+      font-size: 0.95rem;
+      line-height: 1.7;
+    }
+
+    .exp-box {
+      margin-top: 1.25rem;
+      padding: 1rem;
+      background: rgba(255, 255, 255, 0.03);
+      border-left: 3px solid var(--accent-cyan);
+      border-radius: 0 8px 8px 0;
+      font-size: 0.88rem;
+    }
+
+    /* Cheatsheet Command Hub */
+    .filter-bar {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.6rem;
+      margin-bottom: 1.75rem;
+    }
+
+    .filter-chip {
+      padding: 0.45rem 1rem;
+      border-radius: 9999px;
+      background: var(--bg-surface-elevated);
+      border: 1px solid var(--border-subtle);
+      color: var(--text-muted);
+      font-size: 0.85rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
+
+    .filter-chip:hover {
+      color: var(--text-main);
+      border-color: rgba(255, 255, 255, 0.2);
+    }
+
+    .filter-chip.active {
+      background: var(--k8s-blue);
+      border-color: var(--k8s-blue);
+      color: #fff;
+      box-shadow: 0 0 12px var(--k8s-blue-glow);
+    }
+
+    .cmd-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(370px, 1fr));
+      gap: 1.25rem;
+    }
+
+    .cmd-card {
+      background: var(--bg-surface-card);
+      border: 1px solid var(--border-subtle);
+      border-radius: 14px;
+      padding: 1.25rem;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      transition: all 0.2s ease;
+    }
+
+    .cmd-card:hover {
+      border-color: var(--border-hover);
+      transform: translateY(-2px);
+      box-shadow: 0 8px 25px rgba(0, 0, 0, 0.35);
+    }
+
+    .cmd-badge-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 0.75rem;
+    }
+
+    .cmd-category {
+      font-size: 0.72rem;
+      text-transform: uppercase;
+      font-weight: 700;
+      letter-spacing: 0.05em;
+      padding: 0.2rem 0.55rem;
+      border-radius: 6px;
+      background: rgba(56, 189, 248, 0.1);
+      color: var(--accent-cyan);
+    }
+
+    .cmd-code-box {
+      background: #05070d;
+      border: 1px solid rgba(255, 255, 255, 0.06);
+      border-radius: 8px;
+      padding: 0.75rem 0.9rem;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 0.5rem;
+      margin-bottom: 0.75rem;
+    }
+
+    .cmd-text {
+      font-family: var(--font-mono);
+      font-size: 0.85rem;
+      color: #38bdf8;
+      word-break: break-all;
+    }
+
+    .copy-btn {
+      background: transparent;
+      border: none;
+      color: var(--text-dim);
+      cursor: pointer;
+      padding: 0.25rem;
+      border-radius: 4px;
+      transition: color 0.15s;
+      flex-shrink: 0;
+    }
+
+    .copy-btn:hover {
+      color: #fff;
+    }
+
+    .cmd-desc {
+      font-size: 0.87rem;
+      color: var(--text-muted);
+      line-height: 1.5;
+    }
+
+    /* Troubleshooting Decision Tree */
+    .diag-container {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+      gap: 1.25rem;
+    }
+
+    .diag-card {
+      background: var(--bg-surface-elevated);
+      border: 1px solid var(--border-subtle);
+      border-radius: 14px;
+      padding: 1.5rem;
+      position: relative;
+    }
+
+    .diag-card.danger { border-top: 3px solid var(--accent-rose); }
+    .diag-card.warning { border-top: 3px solid var(--accent-amber); }
+    .diag-card.info { border-top: 3px solid var(--accent-cyan); }
+    .diag-card.purple { border-top: 3px solid var(--accent-purple); }
+
+    .diag-status {
+      font-family: var(--font-mono);
+      font-weight: 700;
+      font-size: 1.05rem;
+      margin-bottom: 0.5rem;
+      color: #fff;
+    }
+
+    .diag-card.danger .diag-status { color: var(--accent-rose); }
+    .diag-card.warning .diag-status { color: var(--accent-amber); }
+    .diag-card.info .diag-status { color: var(--accent-cyan); }
+    .diag-card.purple .diag-status { color: var(--accent-purple); }
+
+    .diag-cause {
+      font-size: 0.88rem;
+      color: var(--text-muted);
+      margin-bottom: 1rem;
+    }
+
+    .diag-step {
+      font-size: 0.84rem;
+      color: #cbd5e1;
+      background: rgba(0, 0, 0, 0.25);
+      border-radius: 8px;
+      padding: 0.75rem;
+      border: 1px solid rgba(255, 255, 255, 0.04);
+    }
+
+    .diag-step code {
+      font-family: var(--font-mono);
+      color: var(--accent-cyan);
+      display: block;
+      margin-top: 0.25rem;
+      font-size: 0.8rem;
+    }
+
+    /* OrbStack Special Banner */
+    .orb-banner {
+      background: linear-gradient(135deg, rgba(50, 108, 229, 0.15), rgba(168, 85, 247, 0.15));
+      border: 1px solid rgba(56, 189, 248, 0.25);
+      border-radius: 18px;
+      padding: 2rem 2.5rem;
+      margin-top: 3rem;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 2rem;
+    }
+
+    @media (max-width: 768px) {
+      .orb-banner {
+        flex-direction: column;
+        text-align: center;
+      }
+    }
+
+    .orb-info h3 {
+      font-size: 1.35rem;
+      color: #fff;
+      margin-bottom: 0.5rem;
+    }
+
+    .orb-info p {
+      color: var(--text-muted);
+      font-size: 0.95rem;
+    }
+
+    .orb-tag {
+      background: var(--k8s-blue);
+      color: #fff;
+      padding: 0.65rem 1.25rem;
+      border-radius: 10px;
+      font-weight: 700;
+      font-size: 0.9rem;
+      text-decoration: none;
+      display: inline-block;
+      white-space: nowrap;
+    }
+
+    /* Footer */
+    footer {
+      border-top: 1px solid var(--border-subtle);
+      padding: 2.5rem 0;
+      text-align: center;
+      color: var(--text-dim);
+      font-size: 0.88rem;
+      margin-top: 4rem;
+    }
+
+    /* Toast Notification */
+    .toast {
+      position: fixed;
+      bottom: 2rem;
+      right: 2rem;
+      background: #10b981;
+      color: #fff;
+      padding: 0.75rem 1.4rem;
+      border-radius: 10px;
+      font-size: 0.9rem;
+      font-weight: 600;
+      box-shadow: 0 10px 25px rgba(0, 0, 0, 0.4);
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      transform: translateY(100px);
+      opacity: 0;
+      transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+      z-index: 999;
+    }
+
+    .toast.show {
+      transform: translateY(0);
+      opacity: 1;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Navigation Bar -->
+  <header class="navbar">
+    <div class="container nav-inner">
+      <a href="#" class="brand">
+        <svg class="brand-logo" viewBox="0 0 100 100">
+          <path d="M50 5 L89 27.5 L89 72.5 L50 95 L11 72.5 L11 27.5 Z" stroke="currentColor" stroke-width="6" fill="none"/>
+          <circle cx="50" cy="50" r="14" fill="currentColor"/>
+          <path d="M50 36 L50 20 M50 64 L50 80 M38 43 L24 35 M62 57 L76 65 M38 57 L24 65 M62 43 L76 35" stroke="currentColor" stroke-width="6"/>
+        </svg>
+        Kubernetes Hub
+      </a>
+      <nav>
+        <ul class="nav-links">
+          <li><a href="#architecture" class="nav-link">Kiến Trúc</a></li>
+          <li><a href="#hierarchy" class="nav-link">Mô Hình Đối Tượng</a></li>
+          <li><a href="#manifest" class="nav-link">Giải Phẫu YAML</a></li>
+          <li><a href="#cheatsheet" class="nav-link">Lệnh Kubectl</a></li>
+          <li><a href="#troubleshooting" class="nav-link">Xử Lý Lỗi</a></li>
+        </ul>
+      </nav>
+    </div>
+  </header>
+
+  <!-- Hero Section -->
+  <main class="container">
+    <section class="hero">
+      <div class="hero-badge">Tài Liệu Tương Tác K8s 2026</div>
+      <h1 class="hero-title">Cẩm Nang Toàn Diện Kubernetes</h1>
+      <p class="hero-subtitle">
+        Khám phá bản đồ kiến trúc cụm, hệ thống phân cấp đối tượng từ Pod tới Ingress, giải phẫu manifest YAML và bảng tra cứu câu lệnh `kubectl` thực tế.
+      </p>
+
+      <div class="search-wrapper">
+        <svg class="search-icon" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
+        </svg>
+        <input 
+          type="text" 
+          id="globalSearchInput" 
+          class="search-input" 
+          placeholder="Tìm nhanh câu lệnh hoặc khái niệm (ví dụ: pod, logs, port-forward, CrashLoopBackOff)..." 
+          aria-label="Tìm kiếm lệnh kubectl và tài liệu Kubernetes"
+        >
+      </div>
+    </section>
+
+    <!-- Section 1: Architecture -->
+    <section id="architecture">
+      <div class="section-header">
+        <span class="section-tag">01. Nền Tảng Cốt Lõi</span>
+        <h2 class="section-title">Kiến Trúc Cụm (Cluster Architecture)</h2>
+        <p class="section-desc">Mô hình phân tán gồm Control Plane (Bộ não điều hành) và Worker Nodes (Nơi thực thi ứng dụng).</p>
+      </div>
+
+      <div class="arch-grid">
+        <!-- Control Plane Card -->
+        <div class="card">
+          <div class="card-title-group">
+            <div class="card-badge">🧠</div>
+            <div>
+              <h3 class="card-title">Control Plane (Master Node)</h3>
+              <p class="section-desc" style="font-size: 0.85rem;">Kiểm soát trạng thái, nhận chỉ thị và phân bổ tài nguyên</p>
+            </div>
+          </div>
+          <div class="component-list">
+            <div class="component-item active" onclick="showArchDetail('apiserver')">
+              <div class="comp-header">
+                <span class="comp-name">kube-apiserver</span>
+                <span class="comp-tag">REST API Gateway</span>
+              </div>
+              <p class="comp-desc">Cửa ngõ trung tâm tiếp nhận và xác thực mọi yêu cầu từ `kubectl`, UI hay các thành phần khác.</p>
+            </div>
+
+            <div class="component-item" onclick="showArchDetail('etcd')">
+              <div class="comp-header">
+                <span class="comp-name">etcd</span>
+                <span class="comp-tag">Key-Value Store</span>
+              </div>
+              <p class="comp-desc">Cơ sở dữ liệu phân tán lưu trữ toàn bộ trạng thái mong muốn (Desired State) của cả cluster.</p>
+            </div>
+
+            <div class="component-item" onclick="showArchDetail('scheduler')">
+              <div class="comp-header">
+                <span class="comp-name">kube-scheduler</span>
+                <span class="comp-tag">Bộ lập lịch</span>
+              </div>
+              <p class="comp-desc">Theo dõi Pod mới tạo chưa có Node và tính toán để gán Pod xuống Worker Node tối ưu nhất.</p>
+            </div>
+
+            <div class="component-item" onclick="showArchDetail('controller')">
+              <div class="comp-header">
+                <span class="comp-name">kube-controller-manager</span>
+                <span class="comp-tag">Vòng lặp điều khiển</span>
+              </div>
+              <p class="comp-desc">Liên tục so sánh trạng thái thực tế với trạng thái mong muốn và tự động kích hoạt sửa chữa (Self-healing).</p>
+            </div>
+          </div>
+        </div>
+
+        <!-- Worker Node Card -->
+        <div class="card">
+          <div class="card-title-group">
+            <div class="card-badge" style="background: rgba(16, 185, 129, 0.15); color: var(--accent-emerald);">⚡</div>
+            <div>
+              <h3 class="card-title">Worker Nodes (Các Máy Thực Thi)</h3>
+              <p class="section-desc" style="font-size: 0.85rem;">Môi trường hạ tầng chạy trực tiếp các Pod ứng dụng</p>
+            </div>
+          </div>
+          <div class="component-list">
+            <div class="component-item" onclick="showArchDetail('kubelet')">
+              <div class="comp-header">
+                <span class="comp-name">kubelet</span>
+                <span class="comp-tag">Đặc vụ Node</span>
+              </div>
+              <p class="comp-desc">Tiến trình chạy trên từng Node, nhận chỉ thị PodSpec từ API Server và đảm bảo containers khởi chạy khỏe mạnh.</p>
+            </div>
+
+            <div class="component-item" onclick="showArchDetail('kubeproxy')">
+              <div class="comp-header">
+                <span class="comp-name">kube-proxy</span>
+                <span class="comp-tag">Mạng & Routing</span>
+              </div>
+              <p class="comp-desc">Cấu hình các luật mạng (iptables/IPVS) để các Pod và Service có thể kết nối thông suốt với nhau.</p>
+            </div>
+
+            <div class="component-item" onclick="showArchDetail('runtime')">
+              <div class="comp-header">
+                <span class="comp-name">Container Runtime</span>
+                <span class="comp-tag">containerd / CRI-O</span>
+              </div>
+              <p class="comp-desc">Phần mềm chịu trách nhiệm kéo image, khởi chạy và quản lý vòng đời container thực tế.</p>
+            </div>
+
+            <div class="component-item" onclick="showArchDetail('pod')">
+              <div class="comp-header">
+                <span class="comp-name">Pods & Storage</span>
+                <span class="comp-tag">Đơn vị triển khai</span>
+              </div>
+              <p class="comp-desc">Nơi chứa 1 hoặc nhiều container cùng chia sẻ tài nguyên mạng (localhost), dung lượng và vòng đời.</p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Detail Box for Clicked Component -->
+      <div id="archDetailBox" class="card" style="border-color: rgba(56, 189, 248, 0.4); background: rgba(14, 19, 31, 0.9);">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.5rem;">
+          <h4 id="archDetailTitle" style="color: var(--accent-cyan); font-size: 1.15rem; font-family: var(--font-mono);">kube-apiserver</h4>
+          <span style="font-size: 0.8rem; color: var(--text-dim);">Nhấp vào từng thành phần ở trên để xem chi tiết</span>
+        </div>
+        <p id="archDetailBody" style="color: var(--text-muted); font-size: 0.95rem;">
+          API Server là trái tim của hệ thống Kubernetes. Tất cả giao tiếp giữa các thành phần bên trong (kubelet, scheduler, controller) và bên ngoài (kubectl) đều bắt buộc đi qua đây. API Server không lưu dữ liệu mà chỉ làm việc trực tiếp với etcd.
+        </p>
+      </div>
+    </section>
+
+    <!-- Section 2: Resource Hierarchy Diagram -->
+    <section id="hierarchy">
+      <div class="section-header">
+        <span class="section-tag">02. Mô Hình Đối Tượng</span>
+        <h2 class="section-title">Hệ Thống Phân Cấp Tài Nguyên K8s</h2>
+        <p class="section-desc">Cách Kubernetes tổ chức ứng dụng từ tầng mạng ngoài cùng xuống đến từng container.</p>
+      </div>
+
+      <div class="hierarchy-container">
+        <div class="diagram-flow">
+          <div class="flow-node">
+            <span class="flow-icon">🌐</span>
+            <div class="flow-title">Ingress / Gateway</div>
+            <div class="flow-sub">Định tuyến HTTP/HTTPS domain bên ngoài</div>
+          </div>
+          <span class="flow-arrow">➔</span>
+
+          <div class="flow-node">
+            <span class="flow-icon">🔀</span>
+            <div class="flow-title">Service (ClusterIP)</div>
+            <div class="flow-sub">Load Balancer nội bộ & Địa chỉ IP tĩnh</div>
+          </div>
+          <span class="flow-arrow">➔</span>
+
+          <div class="flow-node">
+            <span class="flow-icon">🚀</span>
+            <div class="flow-title">Deployment</div>
+            <div class="flow-sub">Quản lý phiên bản, Rolling Update & Rollback</div>
+          </div>
+          <span class="flow-arrow">➔</span>
+
+          <div class="flow-node">
+            <span class="flow-icon">🔄</span>
+            <div class="flow-title">ReplicaSet</div>
+            <div class="flow-sub">Đảm bảo số lượng Pod luôn đúng mong muốn</div>
+          </div>
+          <span class="flow-arrow">➔</span>
+
+          <div class="flow-node">
+            <span class="flow-icon">📦</span>
+            <div class="flow-title">Pod (Containers)</div>
+            <div class="flow-sub">Chạy Node.js, Nginx, PostgreSQL...</div>
+          </div>
+        </div>
+
+        <div style="margin-top: 2rem; display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 1rem;">
+          <div style="background: rgba(255,255,255,0.02); border: 1px solid var(--border-subtle); border-radius: 12px; padding: 1.25rem;">
+            <div style="color: var(--accent-cyan); font-weight: 700; margin-bottom: 0.4rem;">Tại sao không tạo Pod trực tiếp?</div>
+            <p style="font-size: 0.87rem; color: var(--text-muted);">
+              Pod đơn lẻ không có cơ chế <strong>tự phục hồi</strong> (Self-healing). Khi Pod bị lỗi hoặc Node chết, Pod sẽ biến mất mãi mãi. Sử dụng <strong>Deployment</strong> sẽ giúp K8s tự động tạo lại Pod mới thay thế.
+            </p>
+          </div>
+
+          <div style="background: rgba(255,255,255,0.02); border: 1px solid var(--border-subtle); border-radius: 12px; padding: 1.25rem;">
+            <div style="color: var(--accent-emerald); font-weight: 700; margin-bottom: 0.4rem;">Service kết nối với Pod bằng cách nào?</div>
+            <p style="font-size: 0.87rem; color: var(--text-muted);">
+              Service sử dụng <strong>Label Selector</strong> (ví dụ `app: nginx`). Bất kỳ Pod nào có nhãn này sẽ tự động được Service thêm vào danh sách nhận traffic (Endpoints) mà không cần quan tâm IP của Pod bị đổi.
+            </p>
+          </div>
+
+          <div style="background: rgba(255,255,255,0.02); border: 1px solid var(--border-subtle); border-radius: 12px; padding: 1.25rem;">
+            <div style="color: var(--accent-purple); font-weight: 700; margin-bottom: 0.4rem;">Cấu hình & Bí mật (Config & Secrets)</div>
+            <p style="font-size: 0.87rem; color: var(--text-muted);">
+              Dùng <strong>ConfigMap</strong> cho các biến môi trường cấu hình thông thường và <strong>Secret</strong> cho mật khẩu, token, SSL key để tách biệt hoàn toàn mã nguồn khỏi cấu hình hạ tầng.
+            </p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Section 3: YAML Manifest Inspector -->
+    <section id="manifest">
+      <div class="section-header">
+        <span class="section-tag">03. Cú Pháp Manifest</span>
+        <h2 class="section-title">Giải Phẫu Tương Tác YAML Manifest</h2>
+        <p class="section-desc">Di chuột hoặc nhấp vào các dòng code bên trái để xem giải thích chi tiết ý nghĩa kỹ thuật bên phải.</p>
+      </div>
+
+      <div class="manifest-viewer">
+        <div class="tab-header">
+          <button class="tab-btn active" onclick="switchManifestTab('pod')">📄 1. Pod (06-pod)</button>
+          <button class="tab-btn" onclick="switchManifestTab('deployment')">🚀 2. Deployment</button>
+          <button class="tab-btn" onclick="switchManifestTab('service')">🔀 3. Service</button>
+        </div>
+
+        <div class="manifest-body">
+          <div class="code-panel" id="codePanelContainer">
+            <!-- Rendered by JS -->
+          </div>
+
+          <div class="explanation-panel">
+            <div class="exp-title">
+              <span id="expBadge">🔍</span>
+              <span id="expHeading">Chọn một dòng để khám phá</span>
+            </div>
+            <p class="exp-content" id="expText">
+              Mọi tài nguyên trong Kubernetes đều tuân theo cấu trúc 4 trường gốc thiết yếu: <code>apiVersion</code>, <code>kind</code>, <code>metadata</code> và <code>spec</code>.
+            </p>
+            <div class="exp-box" id="expTip">
+              💡 <strong>Mẹo chuyên gia:</strong> Luôn dùng <code>kubectl apply -f &lt;file&gt;.yaml</code> để áp dụng cấu hình dạng Declarative (Khai báo trạng thái mong muốn).
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Section 4: Kubectl Command Hub -->
+    <section id="cheatsheet">
+      <div class="section-header">
+        <span class="section-tag">04. Tra Cứu Lệnh</span>
+        <h2 class="section-title">Trung Tâm Lệnh Kubectl Thường Dùng</h2>
+        <p class="section-desc">Tổng hợp các lệnh thiết yếu khi học tập và vận hành thực tế kèm nút sao chép nhanh.</p>
+      </div>
+
+      <!-- Category Filter Chips -->
+      <div class="filter-bar" id="filterBar">
+        <button class="filter-chip active" data-category="all">Tất Cả</button>
+        <button class="filter-chip" data-category="pod">Pod & Chạy Thử</button>
+        <button class="filter-chip" data-category="deployment">Deployments</button>
+        <button class="filter-chip" data-category="debug">Gỡ Lỗi & Logs</button>
+        <button class="filter-chip" data-category="network">Mạng & Services</button>
+        <button class="filter-chip" data-category="cluster">Cluster & Nodes</button>
+      </div>
+
+      <!-- Command Cards Grid -->
+      <div class="cmd-grid" id="cmdGrid">
+        <!-- Injected via JavaScript -->
+      </div>
+    </section>
+
+    <!-- Section 5: Troubleshooting Flowchart -->
+    <section id="troubleshooting">
+      <div class="section-header">
+        <span class="section-tag">05. Gỡ Lỗi Nhanh</span>
+        <h2 class="section-title">Xử Lý Các Trạng Thái Lỗi Của Pod</h2>
+        <p class="section-desc">Hướng dẫn từng bước khi Pod không ở trạng thái Running.</p>
+      </div>
+
+      <div class="diag-container">
+        <!-- CrashLoopBackOff -->
+        <div class="diag-card danger">
+          <div class="diag-status">💥 CrashLoopBackOff</div>
+          <p class="diag-cause">Ứng dụng bên trong container khởi động nhưng bị crash và thoát ra liên tục (mã lỗi khác 0).</p>
+          <div class="diag-step">
+            1. Xem log lỗi trước đó:
+            <code>kubectl logs &lt;pod-name&gt; --previous</code>
+            2. Kiểm tra lệnh chạy:
+            <code>kubectl describe pod &lt;pod-name&gt;</code>
+          </div>
+        </div>
+
+        <!-- ImagePullBackOff -->
+        <div class="diag-card warning">
+          <div class="diag-status">⚠️ ImagePullBackOff / ErrImagePull</div>
+          <p class="diag-cause">Kubernetes không thể tải Docker image từ container registry về máy worker node.</p>
+          <div class="diag-step">
+            1. Kiểm tra lại tên image và tag:
+            <code>kubectl describe pod &lt;pod-name&gt;</code>
+            2. Nếu là image private, kiểm tra cấu hình:
+            <code>imagePullSecrets</code>
+          </div>
+        </div>
+
+        <!-- Pending -->
+        <div class="diag-card info">
+          <div class="diag-status">⏳ Pending</div>
+          <p class="diag-cause">Pod chưa được gán vào Node nào do không đủ CPU/RAM hoặc Node bị dính Taints.</p>
+          <div class="diag-step">
+            Xem phần Events ở cuối cùng:
+            <code>kubectl describe pod &lt;pod-name&gt;</code>
+            (Sẽ thấy thông báo 0/1 nodes are available...)
+          </div>
+        </div>
+
+        <!-- OOMKilled -->
+        <div class="diag-card purple">
+          <div class="diag-status">🛑 OOMKilled (Exit Code 137)</div>
+          <p class="diag-cause">Ứng dụng dùng quá mức giới hạn RAM (Memory Limit) được cấp và bị hệ điều hành hủy.</p>
+          <div class="diag-step">
+            Nâng ngưỡng tài nguyên trong YAML:
+            <code>resources.limits.memory: "512Mi"</code>
+          </div>
+        </div>
+      </div>
+
+      <!-- OrbStack Mac Specific Banner -->
+      <div class="orb-banner">
+        <div class="orb-info">
+          <h3>⚡ Mẹo Thực Hành Với OrbStack Trên macOS</h3>
+          <p>
+            Bạn không cần dùng Minikube hay Kind. Cụm K8s của OrbStack đã được tối ưu sẵn cho chip Apple Silicon, tự động định tuyến mạng trực tiếp vào Pod IP (ví dụ <code>curl http://192.168.194.x</code>) mà không cần qua bước NodePort hay Port-forward rườm rà.
+          </p>
+        </div>
+        <a href="#cheatsheet" class="orb-tag">Trải nghiệm ngay</a>
+      </div>
+    </section>
+  </main>
+
+  <!-- Footer -->
+  <footer>
+    <div class="container">
+      <p>Cẩm Nang Kiến Thức & Thực Hành Kubernetes | Được xây dựng riêng cho dự án learn-k8s</p>
+    </div>
+  </footer>
+
+  <!-- Toast Notification -->
+  <div id="toast" class="toast">
+    <svg width="20" height="20" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
+    </svg>
+    <span>Đã sao chép lệnh vào bộ nhớ tạm!</span>
+  </div>
+
+  <script>
+    // Component Arch Details Data
+    const archDetails = {
+      apiserver: {
+        title: "kube-apiserver",
+        body: "API Server là thành phần trung tâm của Control Plane. Tất cả giao tiếp nội bộ và bên ngoài (từ `kubectl` hoặc CI/CD) đều đi qua API Server. Nó xác thực (Authentication), phân quyền (Authorization) và ghi nhận trạng thái vào etcd."
+      },
+      etcd: {
+        title: "etcd Database",
+        body: "Kho lưu trữ dữ liệu phân tán Key-Value nhất quán cao. Mọi dữ liệu về tài nguyên trong cluster (Pods, ConfigMaps, Secrets, Service Accounts) đều được lưu tại đây. Nếu etcd mất dữ liệu, cả cluster sẽ sụp đổ, do đó luôn cần backup etcd thường xuyên."
+      },
+      scheduler: {
+        title: "kube-scheduler",
+        body: "Tìm kiếm các Pod mới tạo mà chưa được phân bổ Node. Scheduler xem xét dung lượng CPU/RAM còn trống của các Node, các ràng buộc như Node Affinity, Taints, Tolerations để chọn ra Node hoàn hảo nhất."
+      },
+      controller: {
+        title: "kube-controller-manager",
+        body: "Tập hợp các bộ điều khiển vòng lặp kín (Reconciliation loops). Ví dụ: Node Controller giám sát sức khỏe của Node; Replication Controller đảm bảo đủ số lượng Pod; Endpoint Controller kết nối Pod với Service."
+      },
+      kubelet: {
+        title: "kubelet (Agent trên Worker Node)",
+        body: "Đặc vụ chạy trên từng Worker Node. Kubelet nhận PodSpec từ API Server và điều khiển Container Runtime (như containerd) tải image, tạo container, gán volume và liên tục báo cáo tình trạng sống còn (Liveness/Readiness probes) về Control Plane."
+      },
+      kubeproxy: {
+        title: "kube-proxy",
+        body: "Dịch vụ mạng duy trì các quy tắc định tuyến trên từng Node. Khi bạn gọi một Service IP, kube-proxy sử dụng iptables hoặc IPVS để phân phối lưu lượng đều đến các Pod thực tế ở phía sau."
+      },
+      runtime: {
+        title: "Container Runtime (CRI)",
+        body: "Phần mềm cấp thấp thực sự thực thi container (tiêu chuẩn CRI hiện nay là containerd hoặc CRI-O, Docker Engine đã được loại bỏ lớp dockershim trung gian từ K8s 1.24)."
+      },
+      pod: {
+        title: "Pods (Đơn vị nhỏ nhất)",
+        body: "Một Pod bao bọc một hoặc nhiều container có cùng không gian mạng và ổ cứng. Các container trong cùng một Pod có thể gọi nhau qua `localhost:<port>`."
+      }
+    };
+
+    function showArchDetail(key) {
+      const data = archDetails[key];
+      if (!data) return;
+      document.getElementById('archDetailTitle').textContent = data.title;
+      document.getElementById('archDetailBody').textContent = data.body;
+      
+      document.querySelectorAll('.component-item').forEach(el => el.classList.remove('active'));
+      event.currentTarget.classList.add('active');
+    }
+
+    // Manifest Tab & Interactive Lines Data
+    const manifests = {
+      pod: {
+        lines: [
+          { text: "apiVersion: v1", key: "apiVersion", val: "v1", exp: "Phiên bản API cốt lõi (Core group) của Kubernetes dành cho tài nguyên Pod." },
+          { text: "kind: Pod", key: "kind", val: "Pod", exp: "Loại đối tượng cần khởi tạo. Ở đây là đơn vị Pod cơ bản." },
+          { text: "", exp: "Dòng trống phân cách." },
+          { text: "metadata:", key: "metadata", exp: "Khu vực chứa thông tin định danh và siêu dữ liệu của đối tượng." },
+          { text: "  name: nginx-pod", key: "name", val: "nginx-pod", exp: "Tên định danh duy nhất của Pod trong Namespace hiện tại." },
+          { text: "", exp: "Dòng trống phân cách." },
+          { text: "spec:", key: "spec", exp: "Đặc tả kỹ thuật (Specification) mong muốn: K8s phải chạy container nào bên trong." },
+          { text: "  containers:", key: "containers", exp: "Danh sách một hoặc nhiều container sẽ cùng chạy trong Pod này." },
+          { text: "    - name: nginx", key: "- name", val: "nginx", exp: "Tên của container trong Pod." },
+          { text: "      image: nginx:alpine", key: "image", val: "nginx:alpine", exp: "Docker Image kéo từ Docker Hub về (bản Alpine siêu nhẹ)." },
+          { text: "      ports:", key: "ports", exp: "Khai báo các cổng mạng container mở ra." },
+          { text: "        - containerPort: 80", key: "containerPort", val: "80", exp: "Cổng 80 mà Nginx bên trong đang lắng nghe yêu cầu." }
+        ]
+      },
+      deployment: {
+        lines: [
+          { text: "apiVersion: apps/v1", key: "apiVersion", val: "apps/v1", exp: "Deployment thuộc nhóm API 'apps' phiên bản v1." },
+          { text: "kind: Deployment", key: "kind", val: "Deployment", exp: "Deployment quản lý vòng đời, rolling updates và tự phục hồi cho Pods." },
+          { text: "metadata:", key: "metadata", exp: "Thông tin định danh của Deployment." },
+          { text: "  name: web-deploy", key: "name", val: "web-deploy", exp: "Tên của Deployment." },
+          { text: "spec:", key: "spec", exp: "Đặc tả hành vi của Deployment." },
+          { text: "  replicas: 3", key: "replicas", val: "3", exp: "Yêu cầu duy trì ĐÚNG 3 bản sao (Pods) hoạt động liên tục." },
+          { text: "  selector:", key: "selector", exp: "Tiêu chí để Deployment biết Pods nào thuộc quyền quản lý của nó." },
+          { text: "    matchLabels:", key: "matchLabels", exp: "So khớp chính xác với nhãn của Pod." },
+          { text: "      app: web", key: "app", val: "web", exp: "Chỉ quản lý các Pod có gắn nhãn `app: web`." },
+          { text: "  template:", key: "template", exp: "Khuôn mẫu để sản xuất các Pods mới." },
+          { text: "    metadata:", key: "metadata", exp: "Metadata của từng Pod được tạo ra." },
+          { text: "      labels:", key: "labels", exp: "Gắn nhãn (Labels) cho Pod mới." },
+          { text: "        app: web", key: "app", val: "web", exp: "Bắt buộc phải khớp với matchLabels ở trên." },
+          { text: "    spec:", key: "spec", exp: "Cấu hình container cho Pod mẫu." },
+          { text: "      containers:", key: "containers", exp: "Danh sách container chạy bên trong Pod mẫu." },
+          { text: "        - name: app", key: "name", val: "app", exp: "Tên container." },
+          { text: "          image: nginx:alpine", key: "image", val: "nginx:alpine", exp: "Docker Image ứng dụng." }
+        ]
+      },
+      service: {
+        lines: [
+          { text: "apiVersion: v1", key: "apiVersion", val: "v1", exp: "Service thuộc core API group v1." },
+          { text: "kind: Service", key: "kind", val: "Service", exp: "Tạo IP tĩnh và bộ cân bằng tải nội bộ cho nhóm Pod." },
+          { text: "metadata:", key: "metadata", exp: "Định danh Service." },
+          { text: "  name: web-service", key: "name", val: "web-service", exp: "Tên Service (cũng chính là DNS nội bộ trong K8s)." },
+          { text: "spec:", key: "spec", exp: "Đặc tả luật chuyển tiếp mạng." },
+          { text: "  type: ClusterIP", key: "type", val: "ClusterIP", exp: "Loại Service nội bộ, chỉ gọi được từ bên trong cluster." },
+          { text: "  selector:", key: "selector", exp: "Tìm kiếm các Pod mục tiêu." },
+          { text: "    app: web", key: "app", val: "web", exp: "Tự động kết nối tới tất cả Pods có gắn nhãn `app: web`." },
+          { text: "  ports:", key: "ports", exp: "Quy tắc ánh xạ cổng." },
+          { text: "    - port: 80", key: "port", val: "80", exp: "Cổng mà Service lắng nghe." },
+          { text: "      targetPort: 80", key: "targetPort", val: "80", exp: "Cổng thực tế của ứng dụng bên trong Pod nhận request." }
+        ]
+      }
+    };
+
+    let currentManifest = 'pod';
+
+    function renderManifest(tabKey) {
+      currentManifest = tabKey;
+      const panel = document.getElementById('codePanelContainer');
+      panel.innerHTML = '';
+      const data = manifests[tabKey].lines;
+
+      data.forEach((lineObj, idx) => {
+        const lineEl = document.createElement('span');
+        lineEl.className = 'code-line';
+        lineEl.textContent = lineObj.text || ' ';
+        
+        lineEl.addEventListener('mouseenter', () => highlightLine(lineObj, lineEl));
+        lineEl.addEventListener('click', () => highlightLine(lineObj, lineEl));
+        panel.appendChild(lineEl);
+      });
+
+      // Default highlight first line
+      highlightLine(data[0], panel.firstChild);
+    }
+
+    function highlightLine(lineObj, lineEl) {
+      document.querySelectorAll('.code-line').forEach(el => el.classList.remove('highlight'));
+      if (lineEl) lineEl.classList.add('highlight');
+
+      if (lineObj.key) {
+        document.getElementById('expHeading').textContent = lineObj.key + (lineObj.val ? `: ${lineObj.val}` : '');
+      } else {
+        document.getElementById('expHeading').textContent = "Khái Niệm Cấu Trúc";
+      }
+      document.getElementById('expText').textContent = lineObj.exp;
+    }
+
+    function switchManifestTab(tabKey) {
+      document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
+      event.currentTarget.classList.add('active');
+      renderManifest(tabKey);
+    }
+
+    // Kubectl Commands Database
+    const commandsData = [
+      {
+        category: 'pod',
+        cmd: 'kubectl apply -f pod.yaml',
+        desc: 'Tạo hoặc cập nhật Pod dựa trên cấu hình khai báo trong file YAML.',
+        catName: 'Pod'
+      },
+      {
+        category: 'pod',
+        cmd: 'kubectl get pods -o wide',
+        desc: 'Xem danh sách Pod cùng IP nội bộ và Node mà Pod đang thực thi.',
+        catName: 'Pod'
+      },
+      {
+        category: 'pod',
+        cmd: 'kubectl get pods -w',
+        desc: 'Theo dõi sự thay đổi trạng thái của Pod liên tục theo thời gian thực (Watch mode).',
+        catName: 'Pod'
+      },
+      {
+        category: 'pod',
+        cmd: 'kubectl delete pod <pod-name>',
+        desc: 'Xoá vĩnh viễn một Pod cụ thể theo tên.',
+        catName: 'Pod'
+      },
+      {
+        category: 'debug',
+        cmd: 'kubectl describe pod <pod-name>',
+        desc: 'Lệnh gỡ lỗi số 1: Xem chi tiết cấu hình và đặc biệt là bảng Events báo lỗi ở cuối.',
+        catName: 'Debug & Logs'
+      },
+      {
+        category: 'debug',
+        cmd: 'kubectl logs -f <pod-name>',
+        desc: 'Theo dõi luồng log trực tiếp (stdout/stderr) từ ứng dụng bên trong Pod.',
+        catName: 'Debug & Logs'
+      },
+      {
+        category: 'debug',
+        cmd: 'kubectl exec -it <pod-name> -- sh',
+        desc: 'Mở terminal tương tác trực tiếp bên trong container của Pod.',
+        catName: 'Debug & Logs'
+      },
+      {
+        category: 'network',
+        cmd: 'kubectl port-forward pod/<pod-name> 8080:80',
+        desc: 'Chuyển tiếp cổng máy thật (8080) vào cổng container (80) để test bằng browser.',
+        catName: 'Mạng'
+      },
+      {
+        category: 'deployment',
+        cmd: 'kubectl create deployment my-dep --image=nginx:alpine',
+        desc: 'Tạo nhanh một Deployment bằng lệnh trực tiếp (Imperative).',
+        catName: 'Deployment'
+      },
+      {
+        category: 'deployment',
+        cmd: 'kubectl scale deployment my-dep --replicas=5',
+        desc: 'Mở rộng hoặc thu nhỏ tức thì số lượng Pods của Deployment lên 5 bản sao.',
+        catName: 'Deployment'
+      },
+      {
+        category: 'deployment',
+        cmd: 'kubectl rollout restart deployment/my-dep',
+        desc: 'Khởi động lại toàn bộ Pods của Deployment theo cơ chế Rolling Update mượt mà.',
+        catName: 'Deployment'
+      },
+      {
+        category: 'cluster',
+        cmd: 'kubectl get nodes -o wide',
+        desc: 'Kiểm tra trạng thái sẵn sàng (Ready) và phiên bản K8s của tất cả các Node.',
+        catName: 'Cluster'
+      },
+      {
+        category: 'cluster',
+        cmd: 'kubectl config get-contexts',
+        desc: 'Xem danh sách các cluster đang kết nối (ví dụ: orbstack, dev, prod).',
+        catName: 'Cluster'
+      },
+      {
+        category: 'network',
+        cmd: 'kubectl get svc',
+        desc: 'Liệt kê tất cả các Service, IP nội bộ (ClusterIP) và các cổng ánh xạ.',
+        catName: 'Mạng'
+      }
+    ];
+
+    function renderCommands(filter = 'all', searchQuery = '') {
+      const container = document.getElementById('cmdGrid');
+      container.innerHTML = '';
+      
+      const query = searchQuery.trim().toLowerCase();
+
+      const filtered = commandsData.filter(item => {
+        const matchCategory = filter === 'all' || item.category === filter;
+        const matchQuery = !query || 
+          item.cmd.toLowerCase().includes(query) || 
+          item.desc.toLowerCase().includes(query) ||
+          item.catName.toLowerCase().includes(query);
+        return matchCategory && matchQuery;
+      });
+
+      if (filtered.length === 0) {
+        container.innerHTML = `
+          <div style="grid-column: 1/-1; text-align: center; padding: 3rem; color: var(--text-dim);">
+            <p style="font-size: 1.1rem;">Không tìm thấy câu lệnh phù hợp với từ khóa "${searchQuery}".</p>
+          </div>
+        `;
+        return;
+      }
+
+      filtered.forEach(item => {
+        const card = document.createElement('div');
+        card.className = 'cmd-card';
+        card.innerHTML = `
+          <div>
+            <div class="cmd-badge-row">
+              <span class="cmd-category">${item.catName}</span>
+            </div>
+            <div class="cmd-code-box">
+              <span class="cmd-text">${item.cmd}</span>
+              <button class="copy-btn" onclick="copyCommand('${item.cmd}')" title="Sao chép lệnh" aria-label="Sao chép">
+                <svg width="18" height="18" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"/>
+                </svg>
+              </button>
+            </div>
+          </div>
+          <p class="cmd-desc">${item.desc}</p>
+        `;
+        container.appendChild(card);
+      });
+    }
+
+    // Copy to Clipboard & Toast
+    function copyCommand(text) {
+      navigator.clipboard.writeText(text).then(() => {
+        showToast(`Đã sao chép: ${text}`);
+      }).catch(() => {
+        // Fallback
+        const textarea = document.createElement('textarea');
+        textarea.value = text;
+        document.body.appendChild(textarea);
+        textarea.select();
+        document.execCommand('copy');
+        document.body.removeChild(textarea);
+        showToast(`Đã sao chép: ${text}`);
+      });
+    }
+
+    function showToast(msg) {
+      const toast = document.getElementById('toast');
+      toast.querySelector('span').textContent = msg;
+      toast.classList.add('show');
+      setTimeout(() => {
+        toast.classList.remove('show');
+      }, 2500);
+    }
+
+    // Filter Chips Event Listeners
+    let currentFilter = 'all';
+    document.querySelectorAll('.filter-chip').forEach(chip => {
+      chip.addEventListener('click', (e) => {
+        document.querySelectorAll('.filter-chip').forEach(c => c.classList.remove('active'));
+        e.currentTarget.classList.add('active');
+        currentFilter = e.currentTarget.dataset.category;
+        renderCommands(currentFilter, document.getElementById('globalSearchInput').value);
+      });
+    });
+
+    // Global Search Event Listener
+    document.getElementById('globalSearchInput').addEventListener('input', (e) => {
+      renderCommands(currentFilter, e.target.value);
+    });
+
+    // Initial render
+    window.addEventListener('DOMContentLoaded', () => {
+      renderManifest('pod');
+      renderCommands('all', '');
+    });
+  </script>
+</body>
+</html>
