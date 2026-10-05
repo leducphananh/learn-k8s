@@ -81,6 +81,50 @@
       align-items: center;
       justify-content: space-between;
       gap: 1rem;
+      position: relative;
+    }
+
+    .nav-toggle {
+      display: none;
+      background: rgba(255, 255, 255, 0.05);
+      border: 1px solid var(--border-subtle);
+      border-radius: 8px;
+      padding: 0.5rem;
+      cursor: pointer;
+      color: var(--text-main);
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      gap: 5px;
+      width: 42px;
+      height: 42px;
+      transition: background 0.2s, border-color 0.2s;
+    }
+
+    .nav-toggle:hover {
+      background: rgba(255, 255, 255, 0.1);
+      border-color: var(--border-hover);
+    }
+
+    .hamburger-bar {
+      display: block;
+      width: 20px;
+      height: 2px;
+      background-color: var(--text-main);
+      border-radius: 2px;
+      transition: transform 0.25s ease, opacity 0.25s ease;
+    }
+
+    .nav-toggle.open .hamburger-bar:nth-child(1) {
+      transform: translateY(7px) rotate(45deg);
+    }
+
+    .nav-toggle.open .hamburger-bar:nth-child(2) {
+      opacity: 0;
+    }
+
+    .nav-toggle.open .hamburger-bar:nth-child(3) {
+      transform: translateY(-7px) rotate(-45deg);
     }
 
     .brand {
@@ -576,7 +620,7 @@
 
     .cmd-grid {
       display: grid;
-      grid-template-columns: repeat(auto-fill, minmax(370px, 1fr));
+      grid-template-columns: repeat(auto-fill, minmax(min(100%, 340px), 1fr));
       gap: 1.25rem;
     }
 
@@ -724,13 +768,6 @@
       gap: 2rem;
     }
 
-    @media (max-width: 768px) {
-      .orb-banner {
-        flex-direction: column;
-        text-align: center;
-      }
-    }
-
     .orb-info h3 {
       font-size: 1.35rem;
       color: #fff;
@@ -789,6 +826,197 @@
       transform: translateY(0);
       opacity: 1;
     }
+
+    /* Media Queries for Comprehensive Responsiveness */
+    @media (max-width: 880px) {
+      .code-panel {
+        border-right: none;
+        border-bottom: 1px solid var(--border-subtle);
+      }
+    }
+
+    @media (max-width: 768px) {
+      .container {
+        padding: 0 1rem;
+      }
+
+      section {
+        padding: 2.75rem 0;
+      }
+
+      .hero {
+        padding: 3rem 0 2rem;
+      }
+
+      .nav-toggle {
+        display: flex;
+      }
+
+      .nav-menu {
+        position: absolute;
+        top: calc(100% + 0.85rem);
+        left: -1rem;
+        right: -1rem;
+        background: rgba(7, 9, 14, 0.96);
+        backdrop-filter: blur(20px);
+        -webkit-backdrop-filter: blur(20px);
+        border-bottom: 1px solid var(--border-subtle);
+        padding: 1rem 1.25rem 1.5rem;
+        transform: translateY(-12px);
+        opacity: 0;
+        visibility: hidden;
+        transition: opacity 0.25s ease, transform 0.25s ease, visibility 0.25s;
+        box-shadow: 0 20px 40px rgba(0, 0, 0, 0.7);
+      }
+
+      .nav-menu.open {
+        transform: translateY(0);
+        opacity: 1;
+        visibility: visible;
+      }
+
+      .nav-links {
+        flex-direction: column;
+        align-items: stretch;
+        gap: 0.5rem;
+      }
+
+      .nav-link {
+        display: block;
+        padding: 0.75rem 1rem;
+        font-size: 0.95rem;
+        background: rgba(255, 255, 255, 0.025);
+        border: 1px solid rgba(255, 255, 255, 0.04);
+        border-radius: 8px;
+      }
+
+      .nav-link:hover {
+        background: rgba(56, 189, 248, 0.1);
+      }
+
+      /* Hierarchy Diagram: Vertical stack with downward arrow */
+      .diagram-flow {
+        flex-direction: column;
+        gap: 0.75rem;
+        align-items: stretch;
+      }
+
+      .flow-node {
+        width: 100%;
+        min-width: 0;
+        padding: 1.1rem 1.25rem;
+      }
+
+      .flow-arrow {
+        display: flex;
+        justify-content: center;
+        transform: rotate(90deg);
+        margin: -0.25rem 0;
+      }
+
+      /* Horizontal scrolling for filter chips on mobile */
+      .filter-bar {
+        flex-wrap: nowrap;
+        overflow-x: auto;
+        padding-bottom: 0.5rem;
+        -webkit-overflow-scrolling: touch;
+        scrollbar-width: none;
+      }
+
+      .filter-bar::-webkit-scrollbar {
+        display: none;
+      }
+
+      .filter-chip {
+        flex-shrink: 0;
+        white-space: nowrap;
+      }
+
+      .card {
+        padding: 1.35rem;
+      }
+
+      .hierarchy-container {
+        padding: 1.25rem;
+      }
+
+      .explanation-panel {
+        padding: 1.5rem;
+      }
+
+      .orb-banner {
+        flex-direction: column;
+        text-align: center;
+        padding: 1.75rem 1.25rem;
+        gap: 1.25rem;
+      }
+
+      .toast {
+        left: 1rem;
+        right: 1rem;
+        bottom: 1rem;
+        text-align: center;
+        justify-content: center;
+        transform: translateY(120%);
+      }
+
+      .toast.show {
+        transform: translateY(0);
+      }
+    }
+
+    @media (max-width: 640px) {
+      .cmd-grid {
+        grid-template-columns: 1fr;
+        gap: 1rem;
+      }
+
+      .cmd-card {
+        padding: 1rem;
+      }
+
+      .cmd-code-box {
+        padding: 0.6rem 0.75rem;
+      }
+
+      .cmd-text {
+        font-size: 0.8rem;
+      }
+
+      .section-title {
+        font-size: 1.5rem;
+      }
+
+      .section-header {
+        margin-bottom: 1.75rem;
+      }
+
+      .hero-subtitle {
+        font-size: 1rem;
+        margin-bottom: 1.75rem;
+      }
+
+      .search-input {
+        padding: 0.85rem 1rem 0.85rem 2.75rem;
+        font-size: 0.9rem;
+      }
+
+      .search-icon {
+        left: 0.9rem;
+        width: 18px;
+        height: 18px;
+      }
+
+      .code-panel {
+        padding: 1rem;
+        font-size: 0.8rem;
+      }
+
+      .tab-btn {
+        padding: 0.75rem 1rem;
+        font-size: 0.82rem;
+      }
+    }
   </style>
 </head>
 <body>
@@ -804,7 +1032,12 @@
         </svg>
         Kubernetes Hub
       </a>
-      <nav>
+      <button class="nav-toggle" id="navToggle" aria-label="Mở menu điều hướng" aria-expanded="false">
+        <span class="hamburger-bar"></span>
+        <span class="hamburger-bar"></span>
+        <span class="hamburger-bar"></span>
+      </button>
+      <nav class="nav-menu" id="navMenu">
         <ul class="nav-links">
           <li><a href="#architecture" class="nav-link">Kiến Trúc</a></li>
           <li><a href="#hierarchy" class="nav-link">Mô Hình Đối Tượng</a></li>
@@ -1480,6 +1713,37 @@
     document.getElementById('globalSearchInput').addEventListener('input', (e) => {
       renderCommands(currentFilter, e.target.value);
     });
+
+    // Mobile Navigation Toggle
+    const navToggle = document.getElementById('navToggle');
+    const navMenu = document.getElementById('navMenu');
+
+    if (navToggle && navMenu) {
+      navToggle.addEventListener('click', (e) => {
+        e.stopPropagation();
+        const isOpen = navMenu.classList.toggle('open');
+        navToggle.classList.toggle('open');
+        navToggle.setAttribute('aria-expanded', isOpen ? 'true' : 'false');
+      });
+
+      // Close mobile menu when clicking a link
+      document.querySelectorAll('.nav-link').forEach(link => {
+        link.addEventListener('click', () => {
+          navMenu.classList.remove('open');
+          navToggle.classList.remove('open');
+          navToggle.setAttribute('aria-expanded', 'false');
+        });
+      });
+
+      // Close mobile menu when clicking outside
+      document.addEventListener('click', (e) => {
+        if (!navToggle.contains(e.target) && !navMenu.contains(e.target)) {
+          navMenu.classList.remove('open');
+          navToggle.classList.remove('open');
+          navToggle.setAttribute('aria-expanded', 'false');
+        }
+      });
+    }
 
     // Initial render
     window.addEventListener('DOMContentLoaded', () => {
