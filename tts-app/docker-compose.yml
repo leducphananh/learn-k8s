@@ -1,0 +1,19 @@
+version: '3.8'
+
+services:
+  tts-studio:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: echotts-studio
+    restart: unless-stopped
+    ports:
+      - "8000:8000"
+    environment:
+      - PORT=8000
+      - MAX_UPLOAD_SIZE_MB=10
+      - DEFAULT_VOICE=vi-VN-HoaiMyNeural
+    volumes:
+      # Mount thư mục app để hỗ trợ live reload trong môi trường phát triển
+      - ./app:/app/app
+    command: ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000", "--reload"]
