@@ -1,0 +1,85 @@
+# 1. Phiên bản API của Kubernetes
+# apps/v1: Nhóm API quản lý các bộ điều khiển ứng dụng (Deployment, StatefulSet, DaemonSet...)
+apiVersion: apps/v1
+
+# 2. Loại tài nguyên (Resource Kind)
+# Khai báo đây là một Deployment (dùng để quản lý bản sao, tự phục hồi, cập nhật rolling-update cho Pod)
+kind: Deployment
+
+# 3. Thông tin định danh (Metadata) của Deployment
+metadata:
+  # Tên của Deployment (duy nhất trong namespace hiện tại)
+  name: nginx-deployment
+
+# 4. Đặc tả kỹ thuật (Specification) - Định nghĩa trạng thái mong muốn của Deployment
+spec:
+  # Số lượng bản sao (Pod) mong muốn chạy đồng thời (K8s luôn tự động duy trì đúng 3 Pod)
+  replicas: 3
+
+  # Bộ chọn (Selector): Giúp Deployment biết nó cần tìm và quản lý những Pod nào
+  selector:
+    # Điều kiện lọc: Các Pod phải có nhãn (label) khớp chính xác với khai báo bên dưới
+    matchLabels:
+      # Quản lý tất cả các Pod có nhãn "app: nginx" (BẮT BUỘC phải khớp với template.metadata.labels)
+      app: nginx
+
+  # Khuôn mẫu (Template): Bản vẽ thiết kế để Deployment dùng nhân bản/tạo mới các Pod
+  template:
+    # Metadata dành riêng cho các Pod được sinh ra từ template này
+    metadata:
+      # Gắn nhãn (labels) dạng Key-Value lên mỗi Pod
+      labels:
+        # Nhãn này giúp Deployment (qua selector ở trên) và Service nhận diện ra Pod
+        app: nginx
+
+    # Cấu hình kỹ thuật bên trong mỗi Pod (chạy container gì, image nào...)
+    spec:
+      # Danh sách các container sẽ chạy trong Pod (thường là 1 container chính)
+      containers:
+        # Tên của container bên trong Pod
+        - name: nginx
+          # Docker Image kéo từ Docker Hub (bản alpine siêu nhẹ, tiết kiệm tài nguyên)
+          image: nginx:alpine
+          # Danh sách cổng mạng của container
+          ports:
+            # Cổng container lắng nghe (cổng 80 - HTTP, chủ yếu mang tính khai báo cho K8s)
+            - containerPort: 80
+
+# ==============================================================================
+# TỔNG HỢP CÁC CÂU LỆNH KIỂM TRA & THỰC HÀNH VỚI DEPLOYMENT (DÀNH CHO NGƯỜI MỚI)
+# ==============================================================================
+#
+# 1. Khởi tạo / Cập nhật Deployment:
+#    kubectl apply -f 07-deployment/deployment.yaml
+#
+# 2. Kiểm tra trạng thái triển khai:
+#    kubectl get deployments                       # Xem tóm tắt (READY, UP-TO-DATE, AVAILABLE)
+#    kubectl get rs                                # Xem ReplicaSet do Deployment tự tạo ra
+#    kubectl get pods -l app=nginx                 # Xem danh sách Pod mang nhãn app=nginx
+#    kubectl get pods -o wide                      # Xem địa chỉ IP và Node của từng Pod
+#    kubectl get pods -w                           # Theo dõi trạng thái Pod thời gian thực (Watch)
+#
+# 3. Xem chi tiết & Gỡ lỗi (Troubleshooting):
+#    kubectl describe deployment nginx-deployment  # Xem chi tiết cấu hình và bảng Events
+#    kubectl rollout status deployment/nginx-deployment # Theo dõi tiến trình cập nhật Pods
+#    kubectl logs -l app=nginx --tail=20           # Xem log kết hợp của các Pod cùng lúc
+#
+# 4. Thử nghiệm tính năng tự phục hồi (Self-Healing):
+#    kubectl delete pod <tên-1-pod-bất-kỳ>         # Xoá thử 1 Pod
+#    kubectl get pods                              # Deployment sẽ lập tức sinh 1 Pod mới!
+#
+# 5. Mở rộng / Thu nhỏ số lượng Pod (Scale):
+#    kubectl scale deployment nginx-deployment --replicas=5
+#
+# 6. Kiểm tra cập nhật ứng dụng không gián đoạn (Rolling Update):
+#    kubectl set image deployment/nginx-deployment nginx=nginx:1.25-alpine
+#    kubectl rollout history deployment/nginx-deployment # Xem lịch sử các lần update
+#    kubectl rollout undo deployment/nginx-deployment    # Quay lại phiên bản trước (Rollback)
+#
+# 7. Truy cập thử nghiệm ứng dụng (Port Forward):
+#    kubectl port-forward deployment/nginx-deployment 8080:80
+#    # Mở trình duyệt truy cập: http://localhost:8080
+#
+# 8. Xoá Deployment (tự động dọn dẹp toàn bộ ReplicaSet và Pod):
+#    kubectl delete -f 07-deployment/deployment.yaml
+# ==============================================================================
