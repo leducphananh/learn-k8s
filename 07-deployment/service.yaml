@@ -1,0 +1,72 @@
+# 1. Phiên bản API của Kubernetes
+# v1: Nhóm core API (quản lý các tài nguyên cốt lõi như Pod, Service, Namespace, ConfigMap...)
+apiVersion: v1
+
+# 2. Loại tài nguyên (Resource Kind)
+# Service: Cung cấp 1 địa chỉ IP tĩnh cố định (ClusterIP) và tên miền DNS nội bộ để truy cập vào nhóm Pods
+kind: Service
+
+# 3. Thông tin định danh (Metadata) của Service
+metadata:
+  # Tên của Service (được dùng làm tên miền DNS nội bộ: ví dụ http://nginx-service)
+  name: nginx-service
+
+# 4. Đặc tả kỹ thuật (Specification) - Cấu hình mạng và định tuyến
+spec:
+  # Loại Service: ClusterIP (mặc định) - chỉ có thể truy cập từ bên trong cụm Kubernetes
+  # (Các loại khác nâng cao hơn: NodePort, LoadBalancer)
+  type: ClusterIP
+
+  # Bộ chọn (Selector): Cực kỳ quan trọng!
+  # Service sẽ tìm TẤT CẢ các Pod có gắn nhãn (label) khớp với khai báo này
+  # và tự động đưa IP của các Pod đó vào danh sách Endpoints để phân phối tải (Load Balancing)
+  selector:
+    # BẮT BUỘC phải khớp với nhãn trong template.metadata.labels của Deployment (app: nginx)
+    app: nginx
+
+  # Cấu hình ánh xạ cổng (Port Mapping)
+  ports:
+    # Giao thức mạng (TCP hoặc UDP, mặc định là TCP)
+    - protocol: TCP
+      # Cổng mà Service sẽ mở trên ClusterIP (client/pod khác sẽ gọi vào cổng này)
+      port: 80
+      # Cổng thực tế bên trong container mà traffic sẽ được chuyển tiếp tới (containerPort của Nginx)
+      targetPort: 80
+
+# ==============================================================================
+# TỔNG HỢP CÁC CÂU LỆNH KIỂM TRA & GỠ LỖI SERVICE (DÀNH CHO NGƯỜI MỚI)
+# ==============================================================================
+#
+# 1. Khởi tạo / Cập nhật Service:
+#    kubectl apply -f 07-deployment/service.yaml
+#
+# 2. Xem danh sách Service và IP ảo (ClusterIP):
+#    kubectl get services (hoặc viết tắt: kubectl get svc)
+#
+# 3. Kiểm tra danh sách Pod mà Service đã kết nối (Endpoints / EndpointSlice):
+#    kubectl get endpoints nginx-service           # Xem các IP của Pod được kết nối
+#    kubectl get endpointslices                    # Chuẩn mới của K8s thay thế Endpoints
+#    (Lưu ý: Nếu ENDPOINTS hiển thị <none>, nghĩa là Service bị LỆCH selector với Pod!)
+#
+# 4. Xem chi tiết Service & các Pod đích:
+#    kubectl describe service nginx-service
+#
+# 5. Kiểm tra gửi request thực tế tới Service:
+#    # Cách 1: Trên macOS dùng OrbStack (có thể curl thẳng vào ClusterIP):
+#    curl http://<CLUSTER-IP-CỦA-SERVICE>
+#
+#    # Cách 2: Port-forward từ Service về máy tính:
+#    kubectl port-forward svc/nginx-service 8080:80
+#    # Mở trình duyệt: http://localhost:8080
+#
+#    # Cách 3: Chạy Pod curl tạm thời bên trong cluster (chuẩn Kubernetes):
+#    kubectl run test-curl --rm -it --image=curlimages/curl -- restart=Never -- curl http://nginx-service
+#
+# 6. Gỡ lỗi khi Service không gọi được (Troubleshooting Selector Mismatch):
+#    kubectl get pods --show-labels                # Kiểm tra nhãn thực tế của các Pod
+#    kubectl get pods -l app=nginx                 # Lọc xem có Pod nào mang nhãn đó không
+#
+# 7. Xoá Service:
+#    kubectl delete -f 07-deployment/service.yaml
+# ==============================================================================
+

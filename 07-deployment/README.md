@@ -1,6 +1,7 @@
-# Kubernetes - Khái niệm Cơ Bản về Deployment
+# Kubernetes - Khái niệm Cơ Bản về Deployment & Service
 
-Tài liệu này giải thích chi tiết kiến trúc của **Deployment**, cấu trúc manifest `deployment.yaml`, mối quan hệ giữa Deployment - ReplicaSet - Pod, và danh sách các câu lệnh `kubectl` thiết yếu để kiểm tra, gỡ lỗi và vận hành.
+Tài liệu này giải thích chi tiết kiến trúc của **Deployment** và **Service**, cấu trúc manifest `deployment.yaml` và `service.yaml`, mối quan hệ giữa Deployment - ReplicaSet - Pod - Service - Endpoints, bài học thực tế về gỡ lỗi lệch Selector, cùng danh sách các câu lệnh `kubectl` thiết yếu để kiểm tra, gỡ lỗi và vận hành.
+
 
 ---
 
@@ -167,9 +168,143 @@ Nhấn `Ctrl + C` để dừng port-forward.
 ### Bước 5: Dọn dẹp tài nguyên khi học xong
 ```bash
 kubectl delete -f 07-deployment/deployment.yaml
+kubectl delete -f 07-deployment/service.yaml
 ```
 Xác nhận đã dọn sạch:
 ```bash
 kubectl get deployments
+kubectl get services
 kubectl get pods
 ```
+
+---
+
+## 6. Service là gì? Tại sao có Deployment rồi vẫn cần Service?
+
+Deployment giúp tạo ra và duy trì 3 Pods Nginx chạy ổn định. Tuy nhiên, trong thực tế bạn sẽ gặp 2 vấn đề lớn:
+1. **IP của Pod luôn biến đổi (Ephemeral IP):** Khi 1 Pod bị chết và K8s tự động tạo lại Pod mới (Self-healing), Pod mới sẽ có một địa chỉ IP ngẫu nhiên hoàn toàn mới. Nếu ứng dụng khác gọi thẳng vào IP của Pod, kết nối sẽ bị đứt gãy.
+2. **Cân bằng tải (Load Balancing):** Bạn có 3 Pods Nginx, vậy client hoặc frontend bên ngoài gửi request vào địa chỉ nào để chia đều tải cho cả 3 Pod?
+
+👉 **Giải pháp là Kubernetes Service:**
+* **Cung cấp một địa chỉ IP ảo cố định (`ClusterIP`):** Không bao giờ thay đổi trong suốt vòng đời của Service.
+* **Cung cấp tên miền DNS nội bộ ổn định:** Ví dụ: `http://nginx-service` (các Pod khác chỉ cần gọi qua tên này).
+* **Tự động cân bằng tải (Load Balancer nội bộ):** Phân phối ngẫu nhiên các request tới các Pod khỏe mạnh đằng sau.
+
+---
+
+## 7. Cơ chế hoạt động: Service $\rightarrow$ Endpoints / EndpointSlice $\rightarrow$ Pod
+
+Làm thế nào Service biết được phía sau nó có những Pod nào để chuyển tiếp request?
+
+```text
+       [ Client / Request ]
+                 │
+                 ▼
+      [ Service: nginx-service ]  (ClusterIP cố định: 192.168.194.213:80)
+                 │
+            Selector:
+            app=nginx
+                 │
+                 ▼
+    [ Endpoints / EndpointSlice ]  (K8s tự động theo dõi và gom danh sách IP của Pod)
+      ├── 192.168.194.10:80
+      ├── 192.168.194.11:80
+      └── 192.168.194.12:80
+                 │
+         ┌───────┼───────┐  (Cân bằng tải ngẫu nhiên)
+         ▼       ▼       ▼
+       [Pod 1] [Pod 2] [Pod 3]  (Các Pod mang nhãn app=nginx)
+```
+
+1. **Service khai báo `selector`:** Chỉ định điều kiện nhãn (ví dụ `app: nginx`).
+2. **Kubernetes Controller tự động tạo `Endpoints` (hoặc `EndpointSlice`):** Quét toàn bộ cluster để tìm các Pod có nhãn khớp với selector. Khi tìm thấy, nó đưa IP:Port của các Pod đó vào danh sách Endpoints.
+3. **Khi Pod thay đổi:** Nếu 1 Pod bị xoá và sinh Pod mới với IP mới, K8s tự động cập nhật Endpoints theo thời gian thực mà bạn không cần cấu hình lại Service.
+
+---
+
+## 8. Giải thích cấu hình `service.yaml`
+
+```yaml
+apiVersion: v1               # Core API v1
+kind: Service                # Loại tài nguyên là Service
+
+metadata:
+  name: nginx-service        # Tên Service (cũng là tên DNS nội bộ)
+
+spec:
+  type: ClusterIP            # Loại Service: ClusterIP (chỉ truy cập nội bộ trong cụm)
+
+  selector:
+    app: nginx               # ⚠️ BẮT BUỘC KHỚP VỚI template.metadata.labels CỦA DEPLOYMENT
+
+  ports:
+    - protocol: TCP          # Giao thức TCP
+      port: 80               # Cổng của Service (ClusterIP:80)
+      targetPort: 80         # Cổng thực tế bên trong container Pod (containerPort của Nginx)
+```
+
+### 🔍 Phân biệt rõ `port` vs `targetPort`:
+* **`port: 80`**: Cổng mở trên Service (ClusterIP). Người dùng hoặc các dịch vụ khác sẽ gửi request đến cổng này: `http://nginx-service:80`.
+* **`targetPort: 80`**: Cổng mà container Nginx bên trong Pod đang lắng nghe (`containerPort: 80`). Service nhận request tại `port` rồi chuyển tiếp (forward) vào `targetPort` của Pod.
+
+---
+
+## 9. Bài học thực tế: Gỡ lỗi lệch Selector (Selector Mismatch)
+
+Một trong những lỗi phổ biến nhất khi làm việc với Kubernetes là **Service không chuyển tiếp được traffic tới Pod**, nguyên nhân 90% là do **lệch Selector**.
+
+### Tình huống giả lập:
+* Pod của Deployment có nhãn: `app: nginx`
+* Bạn cố tình đổi selector của Service thành: `app: backend`
+
+### 1. Dấu hiệu nhận biết:
+Khi chạy các lệnh kiểm tra, bạn sẽ thấy:
+```bash
+kubectl get endpoints nginx-service
+# Kết quả: ENDPOINTS hiển thị <none>
+
+kubectl describe service nginx-service
+# Kết quả: Selector: app=backend
+#           Endpoints: <none>
+
+kubectl get endpointslices
+# Kết quả: ENDPOINTS hiển thị <unset>
+```
+
+Khi gửi request thử:
+```bash
+curl --connect-timeout 3 http://<ClusterIP>
+# Kết quả: Connection timed out hoặc Connection refused (vì Service không tìm thấy Pod đích)
+```
+
+### 2. Quy trình gỡ lỗi (Troubleshooting workflow):
+1. **Kiểm tra nhãn thực tế của Pods đang chạy:**
+   ```bash
+   kubectl get pods --show-labels
+   ```
+2. **Kiểm tra xem selector của Service có tìm thấy Pod nào không:**
+   ```bash
+   kubectl get pods -l app=backend
+   # Kết quả: No resources found in default namespace. (Chứng minh selector bị sai!)
+   ```
+3. **Cách khắc phục:** Sửa lại selector trong `service.yaml` thành `app: nginx` rồi chạy:
+   ```bash
+   kubectl apply -f 07-deployment/service.yaml
+   ```
+4. **Xác nhận kết quả:** Chạy lại `kubectl get endpoints nginx-service`, bạn sẽ thấy ngay danh sách IP của cả 3 Pods xuất hiện!
+
+---
+
+## 10. Tổng hợp các câu lệnh `kubectl` với Service
+
+| Lệnh | Chức năng |
+| :--- | :--- |
+| `kubectl apply -f 07-deployment/service.yaml` | Tạo mới hoặc cập nhật Service từ file YAML |
+| `kubectl get services` (hoặc `kubectl get svc`) | Xem danh sách Service, loại (Type) và địa chỉ IP ảo (`ClusterIP`) |
+| `kubectl get endpoints nginx-service` | **Kiểm tra kết nối:** Xem danh sách IP của các Pod được nối với Service |
+| `kubectl get endpointslices` | Xem tài nguyên EndpointSlice (chuẩn mới thay thế Endpoints từ K8s v1.21+) |
+| `kubectl describe service nginx-service` | Xem chi tiết Service, Selector, Port, TargetPort và Endpoints |
+| `kubectl port-forward svc/nginx-service 8080:80` | Forward cổng `8080` của máy tính vào cổng `80` của Service |
+| `curl http://<ClusterIP>` | Kiểm tra truy cập trực tiếp từ máy Mac (OrbStack hỗ trợ định tuyến ClusterIP) |
+| `kubectl delete -f 07-deployment/service.yaml` | Xoá Service (không ảnh hưởng tới các Pod bên dưới) |
+
