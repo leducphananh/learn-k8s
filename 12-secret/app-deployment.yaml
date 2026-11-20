@@ -1,0 +1,31 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: backend-app
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: backend-app
+  template:
+    metadata:
+      labels:
+        app: backend-app
+    spec:
+      containers:
+        - name: backend
+          image: busybox:1.36
+          command: ['sh', '-c']
+          args:
+            - |
+              echo "Backend starting..."
+              echo "Environment: $NODE_ENV"
+              echo "Database: $DB_HOST:$DB_PORT"
+              echo "Database user: $DB_USER"
+              echo "Password is configured"
+              sleep 3600
+          envFrom:
+            - configMapRef:
+                name: app-config
+            - secretRef:
+                name: app-secret
