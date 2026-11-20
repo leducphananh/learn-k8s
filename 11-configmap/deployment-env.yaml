@@ -1,0 +1,28 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: config-demo
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: config-demo
+  template:
+    metadata:
+      labels:
+        app: config-demo
+    spec:
+      containers:
+        - name: app
+          image: busybox:1.36
+          command: ['sh', '-c']
+          args:
+            - |
+              echo "Application started"
+              echo "APP_ENV=$APP_ENV"
+              echo "APP_PORT=$APP_PORT"
+              echo "API_URL=$API_URL"
+              sleep 3600
+          envFrom:
+            - configMapRef:
+                name: backend-config
